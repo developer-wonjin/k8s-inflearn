@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-3
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: k8sWorker1
+  containers:
+  - name: container
+    image: kubetm/init
