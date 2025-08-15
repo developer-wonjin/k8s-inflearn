@@ -9,6 +9,6 @@ spec:
     ports:
     - containerPort: 8000
   - name: container2
-    image: kubetm/p8080
+    image: kubetm/p8000
     ports:
     - containerPort: 8000
