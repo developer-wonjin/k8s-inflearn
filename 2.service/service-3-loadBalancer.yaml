@@ -1,0 +1,22 @@
+# k delete pods --all
+# k delete svc  --all
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-4
+spec:
+  selector:
+    app: pod
+  ports:
+  - port: 9000
+    targetPort: 8080
+  type: LoadBalancer
+
+# LoadBalancer 타입의 Service는 클라우드 서비스(GCP, AWS, Azure 등)에서 사용 가능
+# - AWS 환경에서 LoadBalancer 타입 Service를 만들면, 
+#   쿠버네티스가 AWS ELB(Elastic Load Balancer) 를 자동으로 생성해줍니다.
+# LoadBalancer 타입으로 Service 생성시 NodePort 타입의 기능을 포함
+# LoadBalancer가 생성해주는 IP를 통해 내부의 IP 대역은 노출시키지 않고, 외부 시스템에 연결 가능
+# LoadBalancer는 NodePort를 통해 트래픽을 전달

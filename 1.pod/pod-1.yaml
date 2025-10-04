@@ -1,0 +1,25 @@
+apiVersion: v1              # 사용할 Kubernetes API 버전 (Pod는 core/v1 사용)
+kind: Pod                   # 리소스 종류: Pod
+metadata:
+  name: pod-1               # Pod 이름 (고유 식별자)
+
+spec:                       # Pod의 스펙 정의
+  containers:               # Pod 내부에 포함될 컨테이너 목록
+  - name: container1        # 첫 번째 컨테이너 이름
+    image: kubetm/p8000     # 사용할 Docker 이미지 (kubetm/p8000)
+    ports:                  # 컨테이너에서 노출할 포트 목록
+    - containerPort: 8000   # 컨테이너가 사용하는 포트 (8000)
+
+  - name: container2        # 두 번째 컨테이너 이름
+    image: kubetm/p8080     # 사용할 Docker 이미지 (kubetm/p8080)
+    ports:                  # 컨테이너에서 노출할 포트 목록
+    - containerPort: 8080   # 컨테이너가 사용하는 포트 (8080)
+
+
+# Master Node에서 Pod-IP:Port로 각각 다른 Container 호출
+# curl <pod-ip>:8000
+# curl <pod-ip>:8080
+
+# Container 내부에서 들어가서 Pod 내부의 다른 Container 호출
+# curl localhost:8000
+# curl localhost:8080

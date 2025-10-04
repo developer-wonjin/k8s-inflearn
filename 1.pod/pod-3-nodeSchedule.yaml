@@ -1,0 +1,47 @@
+# k delete pods --all
+
+# Pod-3 정의
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-3                                # Pod 이름
+spec:
+  nodeSelector:                              # 특정 노드에 Pod 배치 조건
+    kubernetes.io/hostname: k8s-worker1      # k8s-worker1 노드에만 배치
+  containers:
+  - name: container                          # 컨테이너 이름
+    image: kubetm/init                       # 사용할 컨테이너 이미지
+
+---
+
+# Pod-4 정의
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-4                                # Pod 이름
+spec:
+  containers:
+  - name: container                          # 컨테이너 이름
+    image: kubetm/init                       # 사용할 컨테이너 이미지
+    resources:                               # 리소스 요청/제한 설정
+      requests:                              # 최소 보장 리소스
+        memory: 2Gi                          # 메모리 2GiB 요청
+      limits:                                # 최대 사용할 수 있는 리소스
+        memory: 3Gi                          # 메모리 3GiB 제한
+
+---
+
+# Pod-5 정의
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-5                                # Pod 이름
+spec:
+  containers:
+  - name: container                          # 컨테이너 이름
+    image: kubetm/init                       # 사용할 컨테이너 이미지
+    resources:                               # 리소스 요청/제한 설정
+      requests:                              # 최소 보장 메모리
+        memory: 0.5Gi                        # 0.5GiB 요청
+      limits:                                # 최대 메모리
+        memory: 0.5Gi                        # 0.5GiB 제한

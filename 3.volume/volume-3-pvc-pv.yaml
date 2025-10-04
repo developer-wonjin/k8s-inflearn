@@ -1,0 +1,138 @@
+```yaml
+# k delete pods ##all
+# k delete svc  ##all
+
+# admin영역 (PV, Volume) - 먼저 준비되야하는 오브젝트
+# user영역 (Pod, PVC)
+
+
+# Pod에 영구적인 Volume을 할당하기 위한 리소스로 Pod #> PVC #> PV(Volume) 순으로 연결
+# Pod가 삭제됐다 재생성되어도, PVC/PV를 통해 지정된 Volume에 연결됨
+
+# PVC와 PV는 capacity와 accessMode를 기준으로 연결됨 
+#   동일한 capacity와 accessMode가 많은 경우 Selector를 통해 PV와 PVC를 직접 연결 가능 (방법은 아래 별도 가이드 확인)
+
+# PVC의 storageClassName: "" : PVC에 storageClassName를 사용하지 않고 PV에 연결하기 위한 설정 
+#   storageClassName는 [중급편]에서 배우게 됩니다.
+
+# PV의 local&nodeAffinity : 해당 PV에 연결된 Pod를 nodeAffinity에 지정한 Node에 스케줄링하며
+#  해당 Node를 Volume으로 사용 (이때 local.path에 지정된 경로가 해당 Node에 존재 해야함)
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-01                       # PV 이름 (1G, ReadWriteOnce)
+spec:
+  capacity:
+    storage: 1G                     # PV 용량: 1G
+  accessModes:
+  - ReadWriteOnce                   # 하나의 Node에서 하나의 Pod만 읽기/쓰기 가능
+  local:
+    path: /node-v                   # PV 실제 경로 (Node 로컬 디렉토리)
+  nodeAffinity:                     # PV를 특정 Node에만 바인딩
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - {key: kubernetes.io/hostname, operator: In, values: [k8s-worker1]}   # worker1 노드에서만 사용 가능
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-02                       # PV 이름 (1G, ReadOnlyMany)
+spec:
+  capacity:
+    storage: 1G
+  accessModes:
+  - ReadOnlyMany                    # 여러 Node/Pod에서 동시에 읽기만 가능
+  local:
+    path: /node-v
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - {key: kubernetes.io/hostname, operator: In, values: [k8s-worker1]}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-03                       # PV 이름 (2G, ReadWriteOnce)
+spec:
+  capacity:
+    storage: 2G                     # PV 용량: 2G
+  accessModes:
+  - ReadWriteOnce
+  local:
+    path: /node-v
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - {key: kubernetes.io/hostname, operator: In, values: [k8s-worker1]}
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-01                      # PVC 이름 (1G, RWX)
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1G                   # 요청 용량: 1G
+  storageClassName: ""              # 특정 StorageClass 미사용 → PV 직접 매칭
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-02                      # PVC 이름 (1G, ReadOnlyMany)
+spec:
+  accessModes:
+  - ReadOnlyMany
+  resources:
+    requests:
+      storage: 1G
+  storageClassName: ""
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-03                      # PVC 이름 (3G, RWX)
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3G                   # 요청 용량이 PV보다 커서 바인딩 불가 (매칭 실패)
+  storageClassName: ""
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-04                      # PVC 이름 (1G, RWX)
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1G
+  storageClassName: ""              # pv-01 또는 pv-03과 매칭 가능
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod                         # Pod 이름
+spec:
+  containers:
+  - name: container                 # 컨테이너 이름
+    image: kubetm/init              # 컨테이너 이미지
+    volumeMounts:                   
+    - name: pvc-pv                  # 마운트할 볼륨 이름
+      mountPath: /mount3            # 컨테이너 내부 경로 (/mount3) 에 PV 연결
+  volumes:
+  - name : pvc-pv
+    persistentVolumeClaim:
+      claimName: pvc-01             # pvc-01과 바인딩된 PV 사용

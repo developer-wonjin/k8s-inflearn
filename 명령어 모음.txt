@@ -1,0 +1,5 @@
+k apply -f 파일명
+k delete -f 파일명
+k delete 자원유형 자원명1 자원명2
+k delete pods --all
+​k describe pod 파드명

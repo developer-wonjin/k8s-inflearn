@@ -1,0 +1,21 @@
+# k delete deployment 이름
+# k delete pods --all
+
+apiVersion: apps/v1              # 사용할 Kubernetes API 그룹/버전 (Deployment는 apps/v1)
+kind: Deployment                 # 리소스 종류: Deployment
+metadata:
+  name: deployment-1             # Deployment 이름
+spec:
+  replicas: 1                    # 생성할 Pod 개수 (복제본 수)
+  selector:                      # 어떤 Pod를 이 Deployment가 관리할지 정의
+    matchLabels:                 # 라벨 셀렉터
+      app: deploy                # app=deploy 라벨을 가진 Pod를 관리
+  template:                      # 생성할 Pod의 템플릿
+    metadata:
+      name: pod-1                # 템플릿에서 생성될 Pod의 이름 (권장X, 일반적으로 labels만 정의)
+      labels:
+        app: deploy              # Pod에 부여될 라벨 (selector와 반드시 일치해야 함)
+    spec:
+      containers:                # Pod 내부 컨테이너 정의
+      - name: container          # 컨테이너 이름
+        image: kubetm/init       # 사용할 컨테이너 이미지

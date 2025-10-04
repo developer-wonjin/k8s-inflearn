@@ -1,0 +1,105 @@
+# k apply -f pod-2-label.yaml 
+# k delete pods --all
+
+# -----------------------------
+# 개발 환경(dev) Pod 정의
+# -----------------------------
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-1                # Pod 이름 (고유해야 함)
+  labels:                    # 라벨: 필터링/선택용
+    type: web                # 웹 계층 Pod
+    lo: dev                  # 개발 환경(dev)
+spec:
+  containers:
+  - name: container
+    image: kubetm/init       # 컨테이너 이미지
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-2
+  labels:
+    type: db                 # 데이터베이스 계층 Pod
+    lo: dev                  # 개발 환경(dev)
+spec:
+  containers:
+  - name: container
+    image: kubetm/init
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-3
+  labels:
+    type: server             # 서버 계층 Pod
+    lo: dev                  # 개발 환경(dev)
+spec:
+  containers:
+  - name: container
+    image: kubetm/init
+---
+# -----------------------------
+# 운영 환경(production) Pod 정의
+# -----------------------------
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-4
+  labels:
+    type: web                # 웹 계층 Pod
+    lo: production           # 운영 환경(prod)
+spec:
+  containers:
+  - name: container
+    image: kubetm/init
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-5
+  labels:
+    type: db                 # 데이터베이스 계층 Pod
+    lo: production           # 운영 환경(prod)
+spec:
+  containers:
+  - name: container
+    image: kubetm/init
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-6
+  labels:
+    type: server             # 서버 계층 Pod
+    lo: production           # 운영 환경(prod)
+spec:
+  containers:
+  - name: container
+    image: kubetm/init
+---
+# k delete svc svc-for-web svc-for-production
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-for-web
+spec:
+  selector:
+    type: web
+  ports:
+  - port: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-for-production
+spec:
+  selector:
+    lo: production 
+  ports:
+  - port: 8080

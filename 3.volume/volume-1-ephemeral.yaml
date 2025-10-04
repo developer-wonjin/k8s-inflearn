@@ -1,0 +1,43 @@
+# k delete pods --all      # 현재 네임스페이스의 모든 Pod 삭제
+# k delete svc  --all      # 현재 네임스페이스의 모든 Service 삭제
+
+# ephemeral(휘발성) 스토리지 유형의 예시
+# Pod 생명주기와 함께 생성/삭제됨
+# emptyDir, configMap, secret, downwardAPI, ephemeral CSI volume 등이 여기에 속함
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-volume-1       # Pod 이름 (Pod 내부 컨테이너들이 공유할 volume을 정의)
+spec:
+  containers:
+  - name: container1
+    image: kubetm/init
+    volumeMounts:
+    - name: empty-dir      # 아래 volumes 섹션에서 정의한 volume을 참조
+      mountPath: /mount1   # container1 내부 경로 (/mount1)에 volume 마운트
+
+  - name: container2
+    image: kubetm/init
+    volumeMounts:
+    - name: empty-dir      # 동일한 volume을 사용
+      mountPath: /mount2   # container2 내부 경로 (/mount2)에 volume 마운트
+                           # → 두 컨테이너가 같은 emptyDir 볼륨을 공유하게 됨
+
+  volumes:
+  - name : empty-dir
+    emptyDir: {}           # Pod가 생성될 때 노드에 임시 디렉토리 생성
+                           # Pod가 삭제되면 해당 데이터도 함께 삭제됨
+                           # medium: Memory 옵션을 주면 tmpfs 기반 메모리로 동작
+
+# ▶ Pod(container1) 내부로 들어가서 Mount 상태 확인 및 파일 생성
+# ls
+# mount | grep mount1  -- 마운트확인명령어
+# cd mount1
+# echo "file context" >> file.txt
+
+# ▶ Pod(container2) 내부로 들어가서 파일 동기화 확인
+# ls
+# cd mount2 
+# ls
+# cat file.txt

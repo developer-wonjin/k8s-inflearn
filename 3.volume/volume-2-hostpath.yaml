@@ -1,0 +1,4 @@
+# k delete pods --all
+# k delete svc  --all
+
+-- 실무에서 사용할 일 없어서 아직 정리안함
