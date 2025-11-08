@@ -48,7 +48,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: svc                                  # Service 이름
+  name: svc-2                                # Service 이름
 spec:
   selector:
     app: pod                                 # app=pod 라벨을 가진 Pod들 연결
@@ -69,7 +69,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: svc-external-traffic                 # Service 이름
+  name: svc-2-external-traffic                 # Service 이름
 spec:
   selector:
     app: pod                                 # app=pod 라벨을 가진 Pod들 연결
