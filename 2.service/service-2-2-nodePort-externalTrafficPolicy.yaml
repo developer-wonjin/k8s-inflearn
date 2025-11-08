@@ -1,0 +1,20 @@
+# -----------------------------------------------------------
+# NodePort Service 정의 (externalTrafficPolicy=Local)
+# -----------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-2-external-traffic                 # Service 이름
+spec:
+  selector:
+    app: pod                                 # app=pod 라벨을 가진 Pod들 연결
+  ports:
+  - port: 9000                               # Service 포트
+    targetPort: 8080                         # Pod 포트
+    nodePort: 30002                          # 외부 접근용 NodePort
+  type: NodePort
+  externalTrafficPolicy: Local               # 외부 요청을 로컬 노드의 Pod에만 전달
+
+# 사용 예시 (Node IP + NodePort로 접근)
+# curl 192.168.56.31:30002/hostname
+# curl 192.168.56.32:30002/hostname
