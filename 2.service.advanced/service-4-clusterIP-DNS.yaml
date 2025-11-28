@@ -1,0 +1,23 @@
+# k delete pods --all
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-to
+  labels:
+    svc: abc
+spec:
+  containers:
+  - name: container
+    image: kubetm/app
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-4-clusterip
+spec:
+  selector:
+    svc: abc
+  ports:
+  - port: 80
+    targetPort: 8080

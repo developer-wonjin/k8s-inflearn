@@ -1,0 +1,10 @@
+# k delete pods --all
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-from
+spec:
+  containers:
+  - name: container
+    image: kubetm/init

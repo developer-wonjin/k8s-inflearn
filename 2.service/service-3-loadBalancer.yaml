@@ -1,11 +1,9 @@
 # k delete pods --all
-# k delete svc  --all
-
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: svc-3
+  name: svc-3-loadbalancer
 spec:
   selector:
     app: pod
