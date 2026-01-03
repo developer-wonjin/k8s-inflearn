@@ -1,0 +1,52 @@
+# kubectl delete pod request-pod
+# kubectl delete svc stateful-headless
+# kubectl delete rs replica-web replica-pvc
+# kubectl delete sts stateful-db stateful-pvc
+# kubectl delete pvc replica-pvc1 volume-stateful-pvc-0 volume-stateful-pvc-1 volume-stateful-pvc-2
+
+# PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: replica-pvc1
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1G
+  storageClassName: "fast"
+
+# ReplicaSet
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: replica-pvc
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      type: web2
+  template:
+    metadata:
+      labels:
+        type: web2
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k8s-worker1
+      containers:
+      - name: container
+        image: kubetm/init
+        volumeMounts:
+        - name: longhorn
+          mountPath: /applog
+      volumes:
+      - name: longhorn
+        persistentVolumeClaim:
+          claimName: replica-pvc1
+      terminationGracePeriodSeconds: 10
+
+# ▶ 특정 Pod에 들어가서 파일 생성
+# touch /applog/server.log
+# ▶ 다른 Pod에 들어가서 파일 확인 (공유 Volume이기 때문에 데이터 공유됨)
+# ls /applog/server.log      

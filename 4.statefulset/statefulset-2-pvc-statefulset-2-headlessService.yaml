@@ -1,0 +1,44 @@
+# kubectl delete pod request-pod
+# kubectl delete svc stateful-headless
+# kubectl delete rs replica-web replica-pvc
+# kubectl delete sts stateful-db stateful-pvc
+# kubectl delete pvc replica-pvc1 volume-stateful-pvc-0 volume-stateful-pvc-1 volume-stateful-pvc-2
+
+# StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: stateful-pvc
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      type: db2
+  serviceName: "stateful-headless"
+  template: 
+    metadata:
+      labels:
+        type: db2
+    spec:
+      containers:
+      - name: container
+        image: kubetm/app
+        volumeMounts:
+        - name: volume
+          mountPath: /applog
+      terminationGracePeriodSeconds: 10
+  volumeClaimTemplates:
+  - metadata:
+      name: volume
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1G
+      storageClassName: "fast"
+
+# ▶ 특정 Pod에 들어가서 파일 생성
+# touch /applog/server.log
+# ▶ 다른 Pod에 들어가서 파일 확인 (각자의 Volume이기 때문에 데이터 공유 안됨)
+# ls /applog/server.log

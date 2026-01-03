@@ -1,0 +1,35 @@
+# kubectl delete pod request-pod
+# kubectl delete svc stateful-headless
+# kubectl delete rs replica-web replica-pvc
+# kubectl delete sts stateful-db stateful-pvc
+# kubectl delete pvc replica-pvc1 volume-stateful-pvc-0 volume-stateful-pvc-1 volume-stateful-pvc-2
+
+# statefulset-2-pvc-statefulset-1.yaml 수행후 아래 수행
+
+# Service (Headless) 
+apiVersion: v1
+kind: Service
+metadata:
+  name: stateful-headless
+spec:
+  selector:
+    type: db2
+  ports:
+    - port: 80
+      targetPort: 8080    
+  clusterIP: None
+
+#Pod 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: request-pod
+spec:
+  containers:
+  - name: container
+    image: kubetm/init
+
+# ▶ Pod(request-pod)에 들어가서 StatefulSet의 Pod 호출
+# nslookup stateful-headless
+# curl stateful-pvc-0.stateful-headless:8080/hostname
+# curl stateful-pvc-1.stateful-headless:8080/hostname

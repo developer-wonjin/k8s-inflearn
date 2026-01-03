@@ -1,0 +1,50 @@
+# kubectl delete pod request-pod
+# kubectl delete svc stateful-headless
+# kubectl delete rs replica-web replica-pvc
+# kubectl delete sts stateful-db stateful-pvc
+# kubectl delete pvc replica-pvc1 volume-stateful-pvc-0 volume-stateful-pvc-1 volume-stateful-pvc-2
+
+# - Pod 이름 : ReplicaSet (ReplicaSet에 랜덤문자 포함) , StatefulSet (StatefulSet에 0부터 순차적으로 숫자 부여)
+# - Pod 생성 (replica:3) : ReplicaSet (Pod 3개가 동시 생성) , StatefulSet (0부터 순차적으로 하나씩 생성)
+# - Pod 삭제 (replica:3) : ReplicaSet (Pod 3개가 동시 삭제) , StatefulSet (2부터 순차적으로 하나씩 삭제) 
+
+# ReplicaSet
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: replica-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      type: web
+  template:
+    metadata:
+      labels:
+        type: web
+    spec:
+      containers:
+      - name: container
+        image: kubetm/app
+      terminationGracePeriodSeconds: 10
+
+# StatefulSet 
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: stateful-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      type: db
+  template:
+    metadata:
+      labels:
+        type: db
+    spec:
+      containers:
+      - name: container
+        image: kubetm/app
+      terminationGracePeriodSeconds: 10
+
