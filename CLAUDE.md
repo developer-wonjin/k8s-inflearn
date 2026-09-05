@@ -229,16 +229,47 @@ README의 문서 구성 표에도 **선행 조건** 열로 표시한다.
 
 ## 7. 진행 현황
 
-| articleId | 제목 | 상태 |
-|---|---|---|
-| 492 | [기초다지기] Getting-Started Kubernetes! | 미실습 |
-| 495 | [설치] Kubernetes Cluster 설치 - Windows | 해당 없음 (설치 완료) |
-| 496 | [설치] Kubernetes Cluster 설치 - Mac | 해당 없음 |
-| 497 | [기본오브젝트] Pod - Container, Label, NodeSchedule | **완료** |
-| 498 | [기본오브젝트] Service - ClusterIP | 다음 차례 |
-| 499 | [기본오브젝트] Volume - emptyDir | 미실습 |
-| 500 | [기본오브젝트] ConfigMap | 미실습 |
-| 501 | [기본오브젝트] Namespace | 미실습 |
-| 503~530 | ReplicaSet, DaemonSet, StatefulSet, Ingress, HPA 등 | 미실습 |
+| articleId | 제목 | 상태 | 디렉토리 |
+|---|---|---|---|
+| 492 | [기초다지기] Getting-Started Kubernetes! | 미실습 (개념·Docker 위주) | — |
+| 495 | [설치] Kubernetes Cluster 설치 - Windows | 해당 없음 (설치 완료) | — |
+| 496 | [설치] Kubernetes Cluster 설치 - Mac | 해당 없음 | — |
+| 497 | [기본오브젝트] Pod - Container, Label, NodeSchedule | **완료** | `497.pod-container-label-nodeschedule/` |
+| 498 | [기본오브젝트] Service - ClusterIP, NodePort, LoadBalancer | **완료** | `498.service-clusterip-nodeport-loadbalancer/` |
+| 499 | [기본오브젝트] Volume - emptyDir, hostPath, PV/PVC | **완료** | `499.volume-emptydir-hostpath-pv-pvc/` |
+| 500 | [기본오브젝트] ConfigMap, Secret | **완료** | `500.configmap-secret/` |
+| 501 | [기본오브젝트] Namespace, ResourceQuota, LimitRange | **완료** | `501.namespace-resourcequota-limitrange/` |
+| 503 | [컨트롤러] ReplicaSet | **완료** | `503.replicaset/` |
+| 504 | [컨트롤러] Deployment - Recreate, RollingUpdate | **완료** | `504.deployment-recreate-rollingupdate/` |
+| 507 | [컨트롤러] DaemonSet, Job, CronJob | **완료** | `507.daemonset-job-cronjob/` |
+| 510 | [Pod] ReadinessProbe, LivenessProbe | **완료** | `510.readiness-liveness-probe/` |
+| 513 | [Pod] Node Scheduling - Affinity, Taint | **완료** | `513.node-scheduling/` |
+| 516 | [기본오브젝트] Service - Headless, Endpoint, ExternalName | **완료** | `516.service-headless-endpoint-externalname/` |
+| 518 | [기본오브젝트] Volume - Dynamic Provisioning | **부분** (Longhorn 미설치) | `518.dynamic-provisioning/` |
+| 522 | [기본오브젝트] Authentication - X509, ServiceAccount | **부분** (멀티 클러스터 절 제외) | `522.authentication/` |
+| 525 | [기본오브젝트] Authorization - RBAC | **완료** | `525.authorization-rbac/` |
+| 526 | [기본오브젝트] Dashboard - Token | **완료** (브라우저 절차 제외) | `526.dashboard-token/` |
+| 528 | [컨트롤러] StatefulSet | **완료** (PV 수동 대체) | `528.statefulset/` |
+| 529 | [컨트롤러] Ingress - Loadbalancing, Canary | **완료** | `529.ingress/` |
+| 530 | [컨트롤러] AutoScaler - HPA | **완료** | `530.hpa/` |
 
-전체 목록은 `0.tools/doc/list-articles.sh`로 확인한다.
+전체 목록은 `0.tools/doc/list-articles.sh` 로 확인한다.
+
+### 미실습으로 남은 것
+
+| 대상 | 이유 | 필요한 조건 |
+|---|---|---|
+| 518 Longhorn 설치 | 모든 노드에 iscsi 패키지 필요, 워커 노드 접근 불가 | 세 노드에서 `yum install iscsi-initiator-utils` |
+| 522 멀티 클러스터 | 두 번째 클러스터 필요 | `vagrant up` 으로 cluster-B 구축 |
+| 526 브라우저 절차 | PC 인증서 설치·Chrome 확장 | 브라우저에서 직접 |
+
+### 실습 환경에 남긴 변경
+
+실습 과정에서 설치했다가 **되돌린** 것들이다. 다시 필요하면 각 문서를 참고한다.
+
+| 대상 | 상태 | 재설치 |
+|---|---|---|
+| k9s | **설치됨** (`/usr/local/bin/k9s`) | [0.tools/k9s-install.md](0.tools/k9s-install.md) |
+| Nginx Ingress Controller | 제거됨 | [529/1.nginx-controller.md](529.ingress/1.nginx-controller.md) |
+| `fast` StorageClass, 수동 PV | 제거됨 | [528/2.persistentvolume.md](528.statefulset/2.persistentvolume.md) |
+| 노드 라벨·taint | 모두 제거됨 | — |
