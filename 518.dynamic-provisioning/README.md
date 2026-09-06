@@ -16,21 +16,34 @@
 
 | 파일 | 원문 위치 | 다루는 것 | 실습 여부 |
 |---|---|---|---|
-| [1.longhorn.md](1.longhorn.md) | 1) Longhorn 구축 | iscsi 설치, Longhorn, `fast` StorageClass | **미실습** |
+| [1.longhorn.md](1.longhorn.md) | 1) Longhorn 구축 | iscsi 설치, Longhorn, `fast` StorageClass | **설치 완료** (직후 장애 → [부록](../부록%29%20트러블슈팅/마스터-리소스-고갈-apiserver-먹통.md)) |
 | [2.storageclass.md](2.storageclass.md) | 2) Dynamic Provisioning | `storageClassName` 세 가지 사용법 | **부분 실습** |
 | [3.pv-status-reclaim.md](3.pv-status-reclaim.md) | 3) PV Status, ReclaimPolicy | PV 상태 전이, `Released` | **완료** |
 
-## Longhorn을 설치하지 못한 이유
+## iscsi 사전 조건 — 해결됨 (2026-09-06)
+
+처음에는 아래 상태여서 설치하지 못했다.
 
 ```
 master  : iscsi-initiator-utils is not installed
 worker1 : iscsid.service 없음, initiatorname.iscsi 없음
 ```
 
-Longhorn은 **모든 노드에 iscsi 패키지**를 요구한다.
-이 환경에서는 워커 노드에 접속할 수 없어 설치할 수 없었다.
+이후 세 노드 모두 설치를 마쳤다. 2026-09-06 기준 확인 결과다.
 
-설치하려면 **세 노드 각각에서** 아래를 실행한다.
+| 노드 | iscsid | InitiatorName |
+|---|---|---|
+| k8s-master | active / enabled | 설정됨 |
+| k8s-worker1 | active / enabled | `iqn.1994-05.com.redhat:f689d57f95a5` |
+| k8s-worker2 | active / enabled | `iqn.1994-05.com.redhat:f6c04e6434cc` |
+
+이니시에이터 이름은 **노드마다 달라야 한다.** 같으면 Longhorn이 볼륨을 붙이지 못한다.
+
+> **먼저 읽을 것** : Longhorn 설치 직후 master가 리소스 고갈로 멈춰 apiserver가 먹통이 됐다.
+> 2절로 넘어가기 전에 [부록) 마스터 리소스 고갈](../부록%29%20트러블슈팅/마스터-리소스-고갈-apiserver-먹통.md)의
+> 조치를 먼저 적용한다. 현재 master 여유 메모리가 약 1.2GiB뿐이라 볼륨을 attach하면 재발한다.
+
+재설치가 필요하면 **세 노드 각각에서** 아래를 실행한다.
 
 ```bash
 clear                                        # 화면 정리 후 시작

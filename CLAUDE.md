@@ -10,6 +10,33 @@
 
 - **master에 `NoSchedule` taint가 없다.** 일반 Pod이 master에도 스케줄링되므로 강의 화면과 노드 분포가 다르다.
 - 노드 allocatable memory : master 약 3.71Gi / worker 각 약 2.79Gi
+- **master에 Pod 절반이 몰려 있어 여유가 거의 없다.** 무거운 애드온을 올리면 노드가 멈춘다
+  → [부록) 트러블슈팅](부록%29%20트러블슈팅/마스터-리소스-고갈-apiserver-먹통.md)
+- 노드별 여유 메모리 : master 약 1.2GiB / worker1 약 1.85GiB / worker2 약 1.81GiB
+  (총량은 master가 크지만 Pod 25개를 떠안아 **실제 여유는 가장 적다**)
+
+### 노드 접근
+
+master에서 워커 2대로 **키 인증 SSH가 열려 있다.** 비밀번호는 필요 없다.
+
+```bash
+clear                                    # 화면 정리 후 시작
+ssh root@192.168.56.31 hostname          # k8s-worker1
+ssh root@192.168.56.32 hostname          # k8s-worker2
+```
+
+- 키 : `/root/.ssh/id_ed25519` (master에서 생성, 워커 `authorized_keys`에 등록)
+- `ssh-copy-id`는 이 환경에서 실패한다. 비대화형 셸이라 비밀번호 프롬프트에 입력이 전달되지 않는다.
+  키를 새로 심어야 하면 VirtualBox 콘솔에서 직접 `authorized_keys`에 붙여넣는다.
+- 세 노드에 명령을 한 번에 돌릴 때 쓰는 형태 :
+
+  ```bash
+  clear                                  # 화면 정리 후 시작
+  for n in 31 32; do
+    echo "### 192.168.56.$n"
+    ssh root@192.168.56.$n "systemctl is-active iscsid"
+  done
+  ```
 - VM을 정지·재개하면 시계가 뒤처져 이미지 pull이 깨진다 → [부록) 트러블슈팅](부록%29%20트러블슈팅/시계-불일치-ImagePullBackOff.md)
 
 ---
@@ -23,6 +50,7 @@
 | [부록) 네트워크](부록%29%20네트워크/네트워크-네임스페이스-공유.md) | Pod 안 컨테이너가 net/uts/ipc를 공유하고 mnt/pid는 따로 쓰는 구조 |
 | [부록) 삭제](부록%29%20삭제/삭제-grace-period-와-옵션.md) | 삭제가 30초 걸리는 이유, `--grace-period` / `--wait` / `--force` 비교 |
 | [부록) 트러블슈팅](부록%29%20트러블슈팅/시계-불일치-ImagePullBackOff.md) | 노드 시계가 틀어져 `ImagePullBackOff`가 났던 사례 |
+| [부록) 트러블슈팅](부록%29%20트러블슈팅/마스터-리소스-고갈-apiserver-먹통.md) | Longhorn 설치 중 master가 고갈돼 apiserver가 먹통이 된 사례 |
 
 # 문서 작성 규칙
 
@@ -245,7 +273,7 @@ README의 문서 구성 표에도 **선행 조건** 열로 표시한다.
 | 510 | [Pod] ReadinessProbe, LivenessProbe | **완료** | `510.readiness-liveness-probe/` |
 | 513 | [Pod] Node Scheduling - Affinity, Taint | **완료** | `513.node-scheduling/` |
 | 516 | [기본오브젝트] Service - Headless, Endpoint, ExternalName | **완료** | `516.service-headless-endpoint-externalname/` |
-| 518 | [기본오브젝트] Volume - Dynamic Provisioning | **부분** (Longhorn 미설치) | `518.dynamic-provisioning/` |
+| 518 | [기본오브젝트] Volume - Dynamic Provisioning | **부분** (1절 Longhorn 설치 완료, 2절 이후 미실습) | `518.dynamic-provisioning/` |
 | 522 | [기본오브젝트] Authentication - X509, ServiceAccount | **부분** (멀티 클러스터 절 제외) | `522.authentication/` |
 | 525 | [기본오브젝트] Authorization - RBAC | **완료** | `525.authorization-rbac/` |
 | 526 | [기본오브젝트] Dashboard - Token | **완료** (브라우저 절차 제외) | `526.dashboard-token/` |
@@ -259,7 +287,7 @@ README의 문서 구성 표에도 **선행 조건** 열로 표시한다.
 
 | 대상 | 이유 | 필요한 조건 |
 |---|---|---|
-| 518 Longhorn 설치 | 모든 노드에 iscsi 패키지 필요, 워커 노드 접근 불가 | 세 노드에서 `yum install iscsi-initiator-utils` |
+| 518 StorageClass·PV 실습 | Longhorn 설치·iscsi 사전조건은 완료. master 리소스 고갈로 중단 | master RAM 증설 또는 master 스케줄링 차단 |
 | 522 멀티 클러스터 | 두 번째 클러스터 필요 | `vagrant up` 으로 cluster-B 구축 |
 | 526 브라우저 절차 | PC 인증서 설치·Chrome 확장 | 브라우저에서 직접 |
 
@@ -270,6 +298,9 @@ README의 문서 구성 표에도 **선행 조건** 열로 표시한다.
 | 대상 | 상태 | 재설치 |
 |---|---|---|
 | k9s | **설치됨** (`/usr/local/bin/k9s`) | [0.tools/k9s-install.md](0.tools/k9s-install.md) |
+| Longhorn v1.5.0 | **설치됨** (`longhorn-system`, 볼륨 0개) | [518/1.longhorn.md](518.dynamic-provisioning/1.longhorn.md) |
+| iscsi-initiator-utils | **설치됨** (세 노드 모두, `iscsid` active/enabled) | 같은 문서 |
+| 워커 SSH 키 인증 | **설정됨** (master → worker1·worker2, root) | 아래 「노드 접근」 |
 | Nginx Ingress Controller | 제거됨 | [529/1.nginx-controller.md](529.ingress/1.nginx-controller.md) |
 | `fast` StorageClass, 수동 PV | 제거됨 | [528/2.persistentvolume.md](528.statefulset/2.persistentvolume.md) |
 | 노드 라벨·taint | 모두 제거됨 | — |
