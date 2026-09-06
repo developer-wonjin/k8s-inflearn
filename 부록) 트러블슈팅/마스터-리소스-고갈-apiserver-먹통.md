@@ -5,6 +5,7 @@
 - 증상 : `kubectl`이 응답하지 않음 → apiserver `connection refused`
 - 실제 원인 : master 노드(4 vCPU / 3.81GiB)의 **리소스 고갈**. Longhorn 설치가 방아쇠
 - 조치 : VM 재기동 (다만 **재기동 없이도 자체 복구되던 중**이었다 — 5절)
+- 조치 진행 : 6-3 저널 영속화 **적용 완료**. 6-1·6-2는 **미적용**
 - 관련 실습 : [518 / 1. Longhorn 구축](../518.dynamic-provisioning/1.longhorn.md)
 
 ## 무엇을 하고 있었나
@@ -338,19 +339,78 @@ kubectl taint node k8s-master node-role.kubernetes.io/control-plane=:NoSchedule 
 > (CLAUDE.md 「클러스터 특이사항」). taint를 걸면 513 Node Scheduling 등
 > 일부 실습의 Pod 분포가 문서와 달라진다.
 
-### 6-3) 저널 영속화
+### 6-3) 저널 영속화 — **적용 완료 (2026-09-06)**
 
-이번 조사에서 가장 아쉬웠던 부분이다. 다음 장애 때는 `journalctl -b -1`을 쓸 수 있게 해둔다.
+이번 조사에서 가장 아쉬웠던 부분이다. 장애를 겪은 부팅의 `journalctl`이 통째로 사라져
+rsyslog(`/var/log/messages`)로 우회해야 했다.
 
-**세 노드 모두 비영속이다.** master뿐 아니라 worker1·worker2도 `/var/log/journal`이 없다.
-어느 노드에서 장애가 나든 재부팅하면 증거가 사라진다.
+**세 노드 모두 비영속이었다.** 어느 노드에서 장애가 나든 재부팅하면 증거가 사라지는 상태였다.
+
+드롭인 파일로 설정했다. `journald.conf` 본문을 건드리지 않아 되돌리기 쉽다.
 
 ```bash
 clear                                                # 화면 정리 후 시작
-mkdir -p /var/log/journal                            # 영속 저널 디렉토리 생성
-systemd-tmpfiles --create --prefix /var/log/journal  # 권한·소유자 설정
+mkdir -p /etc/systemd/journald.conf.d                # 드롭인 디렉토리
+cat > /etc/systemd/journald.conf.d/persistent.conf <<'CONF'
+[Journal]
+Storage=persistent
+SystemMaxUse=200M
+CONF
+
+mkdir -p /var/log/journal                            # 영속 저장 디렉토리
+systemd-tmpfiles --create --prefix /var/log/journal  # 소유자·권한 설정
 systemctl restart systemd-journald                   # 적용
-journalctl --list-boots                              # 이제부터 부팅별로 쌓인다
+```
+
+- `Storage=persistent`를 명시했다. 디렉토리 존재만으로도 동작하지만(`auto`),
+  명시해두면 디렉토리가 지워져도 다시 만들어진다.
+- `SystemMaxUse=200M`으로 상한을 뒀다. 기본값은 파일시스템의 10%라 29G 디스크에서
+  약 2.9G까지 쓴다. master는 여유가 14G뿐이라 묶어두는 편이 안전하다.
+
+**세 노드 각각에서 실행한다.** 워커는 master에서 SSH로 돌렸다.
+
+```bash
+clear  # 화면 정리 후 시작
+for n in 31 32; do
+  echo "### 192.168.56.$n"
+  ssh root@192.168.56.$n "mkdir -p /var/log/journal && systemctl restart systemd-journald"
+done
+```
+
+#### 적용 결과
+
+| 노드 | `/var/log/journal` | 저널 사용량 | kubelet |
+|---|---|---|---|
+| k8s-master | `e974fd5eade5.../` | 8.0M | active |
+| k8s-worker1 | `417c82750687.../` | 8.0M | active |
+| k8s-worker2 | `f01c7040b9f7.../` | 8.0M | active |
+
+```
+drwxr-sr-x+ 3 root systemd-journal 46 Sep  6 23:45 /var/log/journal
+Sep 06 23:45:02 k8s-worker1 systemd[1]: Started Flush Journal to Persistent Storage.
+```
+
+클러스터 영향은 없었다. 세 노드 `Ready` 유지, Running 아닌 Pod 0개.
+
+`systemd-journald` 재시작은 워크로드에 영향을 주지 않는다. 컨테이너 로그는 containerd가
+`/var/log/pods`에 직접 쓰므로 저널과 무관하다.
+
+#### 되돌리려면
+
+```bash
+clear                                               # 화면 정리 후 시작
+rm -f /etc/systemd/journald.conf.d/persistent.conf  # 설정 제거
+rm -rf /var/log/journal                             # 저장된 저널 삭제
+systemctl restart systemd-journald                  # 적용
+```
+
+#### 다음 장애 때 쓸 것
+
+```bash
+clear                                                        # 화면 정리 후 시작
+journalctl -b -1 -p err --no-pager                           # 직전 부팅의 에러만
+journalctl -b -1 -u kubelet --since '01:10' --until '01:30'  # 시간 구간 지정
+journalctl --list-boots                                      # 보존된 부팅 목록
 ```
 
 ### 6-4) 하지 말 것
@@ -405,3 +465,4 @@ Mem:           3903        2404         136        20       1362        1227
 |---|---|
 | 2026-09-06 23:1x | master 로그만으로 1차 진단 (1~7절) |
 | 2026-09-06 23:3x | 워커 SSH 확보 후 교차 검증 (2-7, 2-8절) — **master 국한 확정** |
+| 2026-09-06 23:45 | 조치 6-3 저널 영속화를 세 노드에 적용 |

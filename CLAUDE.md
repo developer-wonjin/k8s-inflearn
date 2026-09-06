@@ -38,6 +38,7 @@ ssh root@192.168.56.32 hostname          # k8s-worker2
   done
   ```
 - VM을 정지·재개하면 시계가 뒤처져 이미지 pull이 깨진다 → [부록) 트러블슈팅](부록%29%20트러블슈팅/시계-불일치-ImagePullBackOff.md)
+- **저널이 영속화돼 있다.** 재부팅 후에도 `journalctl -b -1`로 직전 부팅 로그를 볼 수 있다
 
 ---
 
@@ -301,6 +302,7 @@ README의 문서 구성 표에도 **선행 조건** 열로 표시한다.
 | Longhorn v1.5.0 | **설치됨** (`longhorn-system`, 볼륨 0개) | [518/1.longhorn.md](518.dynamic-provisioning/1.longhorn.md) |
 | iscsi-initiator-utils | **설치됨** (세 노드 모두, `iscsid` active/enabled) | 같은 문서 |
 | 워커 SSH 키 인증 | **설정됨** (master → worker1·worker2, root) | 아래 「노드 접근」 |
+| 저널 영속화 | **적용됨** (세 노드, `Storage=persistent` / `SystemMaxUse=200M`) | [부록) 트러블슈팅 6-3](부록%29%20트러블슈팅/마스터-리소스-고갈-apiserver-먹통.md) |
 | Nginx Ingress Controller | 제거됨 | [529/1.nginx-controller.md](529.ingress/1.nginx-controller.md) |
 | `fast` StorageClass, 수동 PV | 제거됨 | [528/2.persistentvolume.md](528.statefulset/2.persistentvolume.md) |
 | 노드 라벨·taint | 모두 제거됨 | — |
