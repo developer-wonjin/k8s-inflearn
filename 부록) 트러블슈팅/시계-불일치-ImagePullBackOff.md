@@ -8,7 +8,9 @@
 
 ## 실습 중이던 YAML
 
-```yaml
+```bash
+clear                          # 화면 정리 후 시작
+kubectl apply -f - <<'END'     # deployment-1 — Deployment (replicas 1)
 apiVersion: apps/v1            # Deployment는 apps 그룹의 v1
 kind: Deployment               # 리소스 종류
 metadata:
@@ -26,6 +28,7 @@ spec:
       containers:
       - name: container        # 컨테이너 이름
         image: kubetm/init     # ← 이 이미지를 pull 하다 실패했다
+END
 ```
 
 자가 복구를 확인하려고 Pod을 지운 것이 발단이었다.

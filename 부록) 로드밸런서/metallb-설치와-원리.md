@@ -305,7 +305,9 @@ speaker-tr5rd                1/1     Running   0          2m7s   192.168.56.31  
 
 설치만으로는 IP가 붙지 않는다. **어떤 대역을, 어떤 방식으로 쓸지**를 CR로 알려줘야 한다.
 
-```yaml
+```bash
+clear                                        # 화면 정리 후 시작
+kubectl apply -f - <<'END'                   # lab-pool — IPAddressPool
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool                          # 1) 쓸 IP 대역
 metadata:
@@ -314,7 +316,12 @@ metadata:
 spec:
   addresses:
   - 192.168.56.200-192.168.56.210            # 범위 표기. 192.168.56.200/30 같은 CIDR도 된다
----
+END
+```
+
+```bash
+clear                                        # 화면 정리 후 시작
+kubectl apply -f - <<'END'                   # lab-l2 — L2Advertisement
 apiVersion: metallb.io/v1beta1
 kind: L2Advertisement                        # 2) 그 대역을 L2(ARP)로 광고하라
 metadata:
@@ -323,6 +330,7 @@ metadata:
 spec:
   ipAddressPools:
   - lab-pool                                 # 위 풀을 지목. 생략하면 모든 풀이 대상
+END
 ```
 
 ```bash
@@ -475,7 +483,9 @@ svc-6   LoadBalancer   10.109.142.84   192.168.56.202   9000:31809/TCP
 `metallb.io/loadBalancerIPs` 어노테이션은 **에러도 경고도 없이 무시**되고 자동 배정이 됐다.
 이 버전이 읽는 도메인은 `metallb.universe.tf` 다.
 
-```yaml
+```bash
+clear                                                     # 화면 정리 후 시작
+kubectl apply -f - <<'END'                                # svc-6 — Service (LoadBalancer)
 apiVersion: v1
 kind: Service
 metadata:
@@ -489,6 +499,7 @@ spec:                                                     # metallb.io/... 는 �
   - port: 9000
     targetPort: 8080
   type: LoadBalancer
+END
 ```
 
 ```bash
