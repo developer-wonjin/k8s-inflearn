@@ -52,6 +52,70 @@ MetalLB는 **베어메탈 클러스터용 LoadBalancer 구현체**다. 하는 �
 | BGP | 라우터와 BGP 피어링해 경로를 광고 | BGP를 말하는 라우터 필요 | 가정/실습 환경엔 과하다 |
 
 VirtualBox 호스트 전용 네트워크(`192.168.56.0/24`)에 노드 3대가 같이 물려 있으므로
+
+### 1-4) EXTERNAL-IP는 "공인 IP"라는 뜻이 아니다
+
+`EXTERNAL-IP`에 사설 IP(`192.168.56.200`)가 붙는 것을 보고 **설정이 덜 된 건 아닌지**
+의심하기 쉽다. 아니다. 여기서 `EXTERNAL`은 **인터넷**이 아니라
+**클러스터 바깥**을 가리킨다. 기준선은 Pod 네트워크·ClusterIP 대역이다.
+
+| 이름 | 닿는 범위 | 이 클러스터의 값 |
+|---|---|---|
+| Pod IP | 클러스터 안 | `20.96.0.0/12` |
+| ClusterIP | 클러스터 안 (실재하지 않는 규칙) | `10.96.0.0/12` |
+| **EXTERNAL-IP** | **클러스터 밖 = 노드가 물린 네트워크** | `192.168.56.200` |
+
+클라우드에서 공인 IP가 붙는 건 **클라우드 LB가 원래 인터넷 대면용 장비**라서지,
+`type: LoadBalancer`의 규격이 공인 IP를 요구해서가 아니다. 같은 클라우드에서도
+내부용 LB(`service.beta.kubernetes.io/aws-load-balancer-internal` 등)를 요청하면
+VPC 사설 IP가 붙는다. **어느 쪽이든 Service 입장에서는 똑같은 EXTERNAL-IP다.**
+
+오히려 L2 모드에서는 **사설 IP가 아니면 동작하지 않는다.** 광고 수단이 ARP라
+풀의 IP가 노드와 같은 서브넷에 있어야 하기 때문이다 ([3-1](#3-1-ip-풀로-쓸-대역-고르기)).
+공인 IP 대역을 풀에 적어 넣으면 할당은 되지만 ARP가 닿지 않아 아무도 찾아오지 못한다.
+
+실제로 IP가 붙고 통신까지 되는지는 이렇게 확인한다.
+
+```bash
+clear                                                       # 화면 정리 후 시작
+kubectl get svc svc-4 -o wide                               # EXTERNAL-IP 가 붙었는지
+kubectl get endpoints svc-4                                 # 뒤에 Pod 이 실제로 물려 있는지
+kubectl describe svc svc-4 | tail -5                        # MetalLB 가 할당·광고한 이벤트
+curl -s -o /dev/null -w "HTTP %{http_code}\n" http://192.168.56.200:9000/  # 통신 확인
+```
+
+```
+NAME    TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)          AGE
+svc-4   LoadBalancer   10.106.176.66   192.168.56.200   9000:30359/TCP   36m
+
+NAME    ENDPOINTS                               AGE
+svc-4   20.100.194.93:8080,20.110.126.37:8080   36m
+
+Events:
+  Type    Reason        Age                From                Message
+  Normal  IPAllocated   36m                metallb-controller  Assigned IP ["192.168.56.200"]
+  Normal  nodeAssigned  31m (x2 over 34m)  metallb-speaker     announcing from node "k8s-worker2" with protocol "layer2"
+
+HTTP 200
+```
+
+`IPAllocated` + `nodeAssigned` 이벤트가 둘 다 있고 `curl`이 응답하면 **정상이다.**
+`<pending>`에서 멈추거나, IP는 붙었는데 `nodeAssigned`가 없는 경우만 문제다.
+
+#### 그래도 한계는 있다 — 어디까지 닿느냐
+
+사설 IP라는 사실 자체는 문제가 아니지만, **닿는 범위는 그 네트워크까지**다.
+
+| 출발지 | `192.168.56.200:9000` 접근 | 이유 |
+|---|---|---|
+| 클러스터 노드 3대 | 된다 (위에서 확인) | 같은 L2 |
+| 호스트 PC (`192.168.56.1`) | 된다 (여기서는 미검증) | 호스트 전용 네트워크에 함께 물려 있어 ARP가 닿는다 |
+| 같은 사무실 다른 PC | **안 된다** | 호스트 전용 네트워크는 호스트 PC 밖으로 나가지 않는다 |
+| 인터넷 | **안 된다** | 사설 대역이라 라우팅되지 않는다 |
+
+진짜로 바깥에 공개해야 한다면 MetalLB가 할 일이 아니다.
+**공인 IP를 가진 앞단 장비**(공유기 포트포워딩, 클라우드 NAT, 리버스 프록시)가
+`192.168.56.200`으로 넘겨주도록 따로 구성해야 한다.
 **L2 모드의 전제가 이미 충족**돼 있다.
 
 ---
@@ -589,6 +653,7 @@ kubectl get svc  # LoadBalancer가 다시 <pending>으로 돌아간다
 
 | 질문 | 답 |
 |---|---|
+| EXTERNAL-IP가 사설 IP인데 | **정상이다.** `EXTERNAL`은 인터넷이 아니라 **클러스터 밖**이라는 뜻. L2 모드는 오히려 사설이어야 동작 |
 | 왜 `<pending>`이었나 | `type: LoadBalancer`는 요청서일 뿐, 처리할 주체가 베어메탈엔 없어서 |
 | MetalLB가 하는 일 | `controller`가 IP를 **할당**하고, `speaker`가 ARP로 **광고**한다 |
 | 왜 두 컴포넌트인가 | 할당은 클러스터 전체에 하나면 되고, 광고는 노드마다 필요해서 |
@@ -599,6 +664,7 @@ kubectl get svc  # LoadBalancer가 다시 <pending>으로 돌아간다
 | 특정 IP 고정 | `metallb.universe.tf/loadBalancerIPs` 어노테이션. `metallb.io/...`는 **조용히 무시된다** |
 | NodePort는 사라지나 | 아니다. LoadBalancer가 NodePort를 포함하므로 그대로 남는다 |
 | IPVS 모드라면 | `strictARP: true`가 필요하다 (이 클러스터는 iptables 모드라 불필요) |
+| 인터넷에 공개되나 | **안 된다.** 호스트 전용 네트워크 밖으로 안 나간다. 앞단에 포트포워딩·NAT가 따로 필요하다 |
 | 자원 부담 | speaker 약 31MB/노드 + controller 1개. **가볍다** |
 
 ## 참고

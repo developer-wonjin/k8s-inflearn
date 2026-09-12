@@ -55,7 +55,7 @@ ssh root@192.168.56.32 hostname          # k8s-worker2
 | [부록) 삭제](부록%29%20삭제/삭제-grace-period-와-옵션.md) | 삭제가 30초 걸리는 이유, `--grace-period` / `--wait` / `--force` 비교 |
 | [부록) 트러블슈팅](부록%29%20트러블슈팅/시계-불일치-ImagePullBackOff.md) | 노드 시계가 틀어져 `ImagePullBackOff`가 났던 사례 |
 | [부록) 트러블슈팅](부록%29%20트러블슈팅/마스터-리소스-고갈-apiserver-먹통.md) | Longhorn 설치 중 master가 고갈돼 apiserver가 먹통이 된 사례 |
-| [부록) 로드밸런서](부록%29%20로드밸런서/metallb-설치와-원리.md) | 베어메탈에서 `<pending>`이 나는 이유, MetalLB L2 모드의 원리와 설치 |
+| [부록) 로드밸런서](부록%29%20로드밸런서/metallb-설치와-원리.md) | 베어메탈에서 `<pending>`이 나는 이유, EXTERNAL-IP가 사설 IP인 이유, MetalLB L2 모드의 원리와 설치 |
 
 # 문서 작성 규칙
 
