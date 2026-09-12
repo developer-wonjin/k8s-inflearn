@@ -55,6 +55,10 @@ kubectl get all -n default                   # service/kubernetes 만 남으면 
 | 2 | 다른 노드의 Pod이 같은 `hostPath`를 보는가 | worker1엔 파일, **worker2엔 없음** | [2](2.hostpath.md#검증-다른-노드의-pod은-어떻게-되는가) |
 | 3 | PVC가 요청보다 큰 PV를 받으면 | 1G 요청이 **2G PV를 통째로 차지**, 나머지는 놀게 됨 | [3](3.pv-pvc.md#2-pvc-4개로-어떻게-짝지어지는지-본다) |
 | 4 | `local` PV를 쓰는 Pod의 스케줄링 | `nodeSelector` 없이도 **PV의 `nodeAffinity` 노드로 끌려감** | [3](3.pv-pvc.md#3-pod에-붙인다) |
+| 5 | PV의 `capacity`가 실제 디스크로 강제되는가 | **아니다.** 29G 디스크에 500Gi PV가 Bound되고, 10Mi PV에 50MB가 써진다 | [3](3.pv-pvc.md#이-값을-pv-만들기-전에-참고해야-하나--아니다) |
+| 6 | `local` PV의 `nodeAffinity`가 스케줄링을 지배하는가 | **그렇다.** 볼륨만 뺀 대조군은 worker2에 뜨고, PVC를 붙이면 `Pending` | [3](3.pv-pvc.md#검증-정말-nodeaffinity-때문인가--대조군) |
+| 7 | `Released` PV를 새 PVC가 재사용하는가 | **못 한다.** 조건이 같은 PVC도 `Pending`에 머문다 | [3](3.pv-pvc.md#검증-정말-재사용이-안-되나) |
+| 8 | 쓰는 중인 PVC를 지우면 | `kubectl`은 `deleted`라 출력하지만 finalizer에 막혀 실제로는 안 지워진다 | [3](3.pv-pvc.md#검증-순서를-어기면-어떻게-되나) |
 
 ## 실습 후 정리
 

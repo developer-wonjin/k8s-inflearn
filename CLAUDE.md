@@ -52,6 +52,7 @@ ssh root@192.168.56.32 hostname          # k8s-worker2
 | [부록) 삭제](부록%29%20삭제/삭제-grace-period-와-옵션.md) | 삭제가 30초 걸리는 이유, `--grace-period` / `--wait` / `--force` 비교 |
 | [부록) 트러블슈팅](부록%29%20트러블슈팅/시계-불일치-ImagePullBackOff.md) | 노드 시계가 틀어져 `ImagePullBackOff`가 났던 사례 |
 | [부록) 트러블슈팅](부록%29%20트러블슈팅/마스터-리소스-고갈-apiserver-먹통.md) | Longhorn 설치 중 master가 고갈돼 apiserver가 먹통이 된 사례 |
+| [부록) 로드밸런서](부록%29%20로드밸런서/metallb-설치와-원리.md) | 베어메탈에서 `<pending>`이 나는 이유, MetalLB L2 모드의 원리와 설치 |
 
 # 문서 작성 규칙
 
@@ -233,15 +234,16 @@ kubectl get all -n default  # service/kubernetes 만 남으면 정상
 
 ### 선행 조건이 있는 문서
 
-앞 문서의 리소스를 이어받는 문서는 **정리 블록 위에 경고를 먼저** 둔다.
+앞 문서의 리소스를 이어받는 문서에는 **정리 블록을 두지 않는다.** 정리를 돌리면 전제가 되는
+리소스까지 지워져 실습 자체가 성립하지 않기 때문이다.
 (예: `2-2.service-label.md`는 2-1이 만든 Pod 6개가 있어야 Endpoints가 채워진다)
 
-경고에는 이 표를 넣는다.
+`## 실습 시작 전 정리` 대신 `## 시작 전 확인`을 두고, 경고와 전제 확인 명령만 적는다.
 
 | 상황 | 할 일 |
 |---|---|
-| 앞 문서를 막 끝내고 이어서 온 경우 | 이 절을 건너뛴다 |
-| 처음부터 다시 하는 경우 | 정리 실행 → 앞 문서 먼저 실습 → 복귀 |
+| 앞 문서를 막 끝내고 이어서 온 경우 | 그대로 진행한다 |
+| 처음부터 다시 하는 경우 | 앞 문서를 먼저 실습하고 복귀한다 |
 
 README의 문서 구성 표에도 **선행 조건** 열로 표시한다.
 
@@ -288,7 +290,7 @@ README의 문서 구성 표에도 **선행 조건** 열로 표시한다.
 
 | 대상 | 이유 | 필요한 조건 |
 |---|---|---|
-| 518 StorageClass·PV 실습 | Longhorn 설치·iscsi 사전조건은 완료. master 리소스 고갈로 중단 | master RAM 증설 또는 master 스케줄링 차단 |
+| 518 StorageClass·PV 실습 | Longhorn 설치·iscsi 사전조건은 완료. master 리소스 고갈로 중단. **2026-09-11 스케일 다운** | 복구 후 master RAM 증설 또는 master 스케줄링 차단 |
 | 522 멀티 클러스터 | 두 번째 클러스터 필요 | `vagrant up` 으로 cluster-B 구축 |
 | 526 브라우저 절차 | PC 인증서 설치·Chrome 확장 | 브라우저에서 직접 |
 
@@ -299,8 +301,9 @@ README의 문서 구성 표에도 **선행 조건** 열로 표시한다.
 | 대상 | 상태 | 재설치 |
 |---|---|---|
 | k9s | **설치됨** (`/usr/local/bin/k9s`) | [0.tools/k9s-install.md](0.tools/k9s-install.md) |
-| Longhorn v1.5.0 | **설치됨** (`longhorn-system`, 볼륨 0개) | [518/1.longhorn.md](518.dynamic-provisioning/1.longhorn.md) |
-| iscsi-initiator-utils | **설치됨** (세 노드 모두, `iscsid` active/enabled) | 같은 문서 |
+| Longhorn v1.5.0 | **설치돼 있으나 스케일 다운됨** (2026-09-11, 파드 0개, 볼륨 0개) | [부록) 로드밸런서 7-1](부록%29%20로드밸런서/metallb-설치와-원리.md) 로 복구 |
+| MetalLB v0.14.8 | **설치됨** (`metallb-system`, L2 모드, 풀 `192.168.56.200-210`) | [부록) 로드밸런서](부록%29%20로드밸런서/metallb-설치와-원리.md) |
+| iscsi-initiator-utils | **설치됨** (세 노드 모두, `iscsid` active/enabled) | [518/1.longhorn.md](518.dynamic-provisioning/1.longhorn.md) |
 | 워커 SSH 키 인증 | **설정됨** (master → worker1·worker2, root) | 아래 「노드 접근」 |
 | 저널 영속화 | **적용됨** (세 노드, `Storage=persistent` / `SystemMaxUse=200M`) | [부록) 트러블슈팅 6-3](부록%29%20트러블슈팅/마스터-리소스-고갈-apiserver-먹통.md) |
 | Nginx Ingress Controller | 제거됨 | [529/1.nginx-controller.md](529.ingress/1.nginx-controller.md) |

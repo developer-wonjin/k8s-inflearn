@@ -51,6 +51,7 @@ kubectl get all -n default                   # service/kubernetes 만 남으면 
 |---|---|---|---|
 | 1 | `type: LoadBalancer`로 외부 IP 확보 | 베어메탈이라 `EXTERNAL-IP`가 **`<pending>`** 에서 멈춘다. 클라우드 컨트롤러나 MetalLB가 있어야 IP가 붙는다 | [3](3.loadbalancer.md#2-왜-pending-인가) |
 | 2 | "내 PC의 CMD에서 호출" | master에서 호출하면 `externalTrafficPolicy: Local`이 **적용되지 않는다.** 노드 자신이 만든 트래픽은 외부 트래픽이 아니기 때문. Pod 안에서 호출해 검증했다 | [2](2.nodeport.md#3-svc-3--externaltrafficpolicy-local) |
+| 3 | — | **2026-09-11 MetalLB v0.14.8을 설치**해 `<pending>`을 해소했다. 지금 실습하면 `192.168.56.200`이 붙는다 | [부록) 로드밸런서](../부록%29%20로드밸런서/metallb-설치와-원리.md) |
 
 ## 포트 세 개를 구분하기
 

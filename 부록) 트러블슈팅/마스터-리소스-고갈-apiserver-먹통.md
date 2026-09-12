@@ -5,7 +5,7 @@
 - 증상 : `kubectl`이 응답하지 않음 → apiserver `connection refused`
 - 실제 원인 : master 노드(4 vCPU / 3.81GiB)의 **리소스 고갈**. Longhorn 설치가 방아쇠
 - 조치 : VM 재기동 (다만 **재기동 없이도 자체 복구되던 중**이었다 — 5절)
-- 조치 진행 : 6-3 저널 영속화 **적용 완료**. 6-1·6-2는 **미적용**
+- 조치 진행 : 6-3 저널 영속화 **적용 완료**. 6-1은 미적용, 6-2는 **보류**(아래 사유)
 - 관련 실습 : [518 / 1. Longhorn 구축](../518.dynamic-provisioning/1.longhorn.md)
 
 ## 무엇을 하고 있었나
@@ -335,6 +335,10 @@ kubectl taint node k8s-master node-role.kubernetes.io/control-plane=:NoSchedule 
 - **Longhorn만 빼려면** taint보다 Longhorn 쪽 설정이 안전하다.
   Longhorn UI → Node → `k8s-master`의 `allowScheduling`을 끈다.
 
+> **2026-09-06 보류.** taint/toleration과 Longhorn 스케줄링 개념을 아직 다루지 않아,
+> 513 Node Scheduling·518을 학습한 뒤 그 맥락에서 다시 판단하기로 했다.
+> 볼륨을 붙이지 않는 실습(498 등)은 이 조치 없이도 안전하다.
+>
 > 주의 : 이 저장소의 실습들은 **master에 taint가 없다는 전제**로 쓰여 있다
 > (CLAUDE.md 「클러스터 특이사항」). taint를 걸면 513 Node Scheduling 등
 > 일부 실습의 Pod 분포가 문서와 달라진다.
