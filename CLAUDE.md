@@ -26,6 +26,8 @@ ssh root@192.168.56.32 hostname          # k8s-worker2
 ```
 
 - 키 : `/root/.ssh/id_ed25519` (master에서 생성, 워커 `authorized_keys`에 등록)
+  - `id_ed25519_github`는 **GitHub 전용**이라 노드 접속과 무관하다. `~/.ssh/config`의
+    `IdentitiesOnly yes`로 github.com에만 쓰이므로 워커 접속에 간섭하지 않는다.
 - `ssh-copy-id`는 이 환경에서 실패한다. 비대화형 셸이라 비밀번호 프롬프트에 입력이 전달되지 않는다.
   키를 새로 심어야 하면 VirtualBox 콘솔에서 직접 `authorized_keys`에 붙여넣는다.
 - 세 노드에 명령을 한 번에 돌릴 때 쓰는 형태 :
@@ -49,6 +51,7 @@ ssh root@192.168.56.32 hostname          # k8s-worker2
 | 문서 | 내용 |
 |---|---|
 | [부록) 네트워크](부록%29%20네트워크/네트워크-네임스페이스-공유.md) | Pod 안 컨테이너가 net/uts/ipc를 공유하고 mnt/pid는 따로 쓰는 구조 |
+| [부록) 네트워크](부록%29%20네트워크/IP-주소-체계-총정리.md) | 노드IP·Pod IP·ClusterIP·NodePort·EXTERNAL-IP의 차이와 출발지 IP가 바뀌는 지점 |
 | [부록) 삭제](부록%29%20삭제/삭제-grace-period-와-옵션.md) | 삭제가 30초 걸리는 이유, `--grace-period` / `--wait` / `--force` 비교 |
 | [부록) 트러블슈팅](부록%29%20트러블슈팅/시계-불일치-ImagePullBackOff.md) | 노드 시계가 틀어져 `ImagePullBackOff`가 났던 사례 |
 | [부록) 트러블슈팅](부록%29%20트러블슈팅/마스터-리소스-고갈-apiserver-먹통.md) | Longhorn 설치 중 master가 고갈돼 apiserver가 먹통이 된 사례 |
@@ -65,6 +68,7 @@ k8s-inflearn/
 ├── CLAUDE.md                      이 파일
 ├── 0.tools/                       도구 설치 기록
 │   ├── k9s-install.md
+│   ├── gsheet-service-account.md
 │   └── doc/                       문서 작성용 스크립트 (아래 4절)
 ├── <articleId>.<슬러그>/           게시글 하나 = 디렉토리 하나
 │   ├── README.md                  개요·문서 구성·실습 순서·원문과 다른 점
@@ -309,3 +313,6 @@ README의 문서 구성 표에도 **선행 조건** 열로 표시한다.
 | Nginx Ingress Controller | 제거됨 | [529/1.nginx-controller.md](529.ingress/1.nginx-controller.md) |
 | `fast` StorageClass, 수동 PV | 제거됨 | [528/2.persistentvolume.md](528.statefulset/2.persistentvolume.md) |
 | 노드 라벨·taint | 모두 제거됨 | — |
+| Python 3.9 | **설치됨** (master만, `dnf install python39`) | [0.tools/gsheet-service-account.md](0.tools/gsheet-service-account.md) |
+| 구글 시트 연동 | **설정됨** (`/root/.gsheet/`, 서비스 계정 + gspread) | [0.tools/gsheet-service-account.md](0.tools/gsheet-service-account.md) |
+| GitHub SSH 키 인증 | **설정됨** (`~/.ssh/id_ed25519_github`, origin이 SSH 리모트) | 아래 「노드 접근」 |
