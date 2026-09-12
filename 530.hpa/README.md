@@ -4,6 +4,8 @@
 - 실습일 : 2026-09-05
 - 실습 환경 : Rocky Linux 8.8 / k8s v1.27.2 / containerd 1.6.21 / 노드 3대
 
+## 왜 필요한가
+
 지금까지 `replicas` 는 사람이 정했다. HPA(Horizontal Pod Autoscaler)는
 **부하를 보고 스스로 Pod 수를 조절한다.**
 

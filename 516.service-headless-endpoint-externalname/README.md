@@ -4,6 +4,8 @@
 - 실습일 : 2026-09-05
 - 실습 환경 : Rocky Linux 8.8 / k8s v1.27.2 / containerd 1.6.21
 
+## 왜 필요한가
+
 498에서 Service의 **타입**(ClusterIP/NodePort/LoadBalancer)을 봤다면,
 여기서는 Service의 **이름과 연결 구조**를 파고든다.
 
